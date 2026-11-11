@@ -1,5 +1,5 @@
 import "./chat.css";
-import { DEFAULT_MODEL, MIXES, MODELS, type LadderModel } from "./models";
+import { DEFAULT_MODEL, MODELS, fillModelPicker, type LadderModel } from "./models";
 import { EXAMPLES } from "./examples";
 import type { FromWorker, ToWorker } from "./worker";
 
@@ -33,17 +33,7 @@ const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "modu
 const send = (m: ToWorker) => worker.postMessage(m);
 const byId = (id: string) => MODELS.find((m) => m.id === id);
 
-for (const mix of MIXES) {
-  const group = document.createElement("optgroup");
-  group.label = mix;
-  for (const m of MODELS.filter((x) => x.mix === mix)) {
-    const o = document.createElement("option");
-    o.value = m.id;
-    o.textContent = `${mix} · ${m.label}`;
-    group.append(o);
-  }
-  modelSel.append(group);
-}
+fillModelPicker(modelSel);
 
 function setStatus(s: string) {
   statusEl.textContent = s;
@@ -85,7 +75,7 @@ function go() {
     stop: [],
     temperature: Math.max(0, Number(tempIn.value) || 0),
     topK: TOP_K,
-    maxTokens: Math.max(1, Math.min(1000, Math.round(Number(maxIn.value) || 32))),
+    maxTokens: Math.max(1, Math.min(1000, Math.round(Number(maxIn.value) || 128))),
   });
 }
 

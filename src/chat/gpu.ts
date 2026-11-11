@@ -221,7 +221,7 @@ export class GpuGPT {
     const { n_embd: d, n_head: nHead, n_layer: L, vocab_size: V } = this.cfg;
     const hd = d / nHead;
     const half = hd / 2;
-    if (d % 128 || hd > 256) throw new Error(`unsupported shape d=${d}, head_dim=${hd}`);
+    if (d % 4 || hd % 2 || hd > 256) throw new Error(`unsupported shape d=${d}, head_dim=${hd}`);
     const S = GPUBufferUsage.STORAGE;
 
     const upload = (data: Float32Array) => {

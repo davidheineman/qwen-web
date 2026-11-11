@@ -1,5 +1,5 @@
 import "./rl.css";
-import { DEFAULT_MODEL, MIXES, MODELS } from "../chat/models";
+import { DEFAULT_MODEL, MODELS, fillModelPicker } from "../chat/models";
 import { DEFAULT_MAX_NEW, TASKS } from "./tasks";
 import { createEditor } from "./editor";
 import type { FromWorker, Settings, StepResult, ToWorker } from "./worker";
@@ -50,12 +50,7 @@ const showTargets = () => {
 
 // ---------------------------------------------------------------- settings
 
-for (const mix of MIXES) {
-  const g = document.createElement("optgroup");
-  g.label = mix;
-  for (const m of MODELS.filter((x) => x.mix === mix)) g.append(new Option(`${mix} · ${m.label}`, m.id));
-  modelSel.append(g);
-}
+fillModelPicker(modelSel);
 TASKS.forEach((t, i) => taskSel.append(new Option(t.name, String(i))));
 taskSel.append(new Option("custom", "custom"));
 

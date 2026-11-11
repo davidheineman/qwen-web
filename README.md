@@ -21,11 +21,12 @@ The app uses it automatically; add `?remote=1` to force the Hub path.
 
 ## Ladder playground (`index.html`)
 
-A second, much simpler page: pick a model (default: the 64M NanoGPT Ladder v3 base from
-[tiny-rl-refined-v3-model-sweep](https://huggingface.co/davidheineman/tiny-rl-refined-v3-model-sweep), public),
-or any of the 28 models from the
+A second, much simpler page: pick a model from the
+[NanoGPT Ladder v3](https://huggingface.co/collections/davidheineman/nanogpt-ladder-v3-completed-pretrained-models)
+(public; base / chat-heavy / code-heavy / math-heavy × 8M–128M params × 10/30/100 tokens per parameter; default
+`base-64m-30tpp`) or the 28 models of the
 [NanoGPT Ladder v2](https://huggingface.co/collections/davidheineman/nanogpt-ladder-v2-28-completed-models)
-(4 data mixtures × small/bridge/large × 250M–4B training tokens, 18M–51M params, private), type raw text and press
+(private, needs a Hugging Face token; 4 data mixtures × small/bridge/large × 250M–4B training tokens), type raw text and press
 **Continue** (⌘/Ctrl+Enter) to have the model append to it. No chat template: what you see is exactly what the model sees.
 
 - `src/chat/torchzip.ts` reads the original `model.pt` (`torch.save` zip + pickle) directly in the browser.
