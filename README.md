@@ -4,11 +4,12 @@ Runs [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B) entirely in the b
 every weight matrix and every intermediate activation, layer by layer, for each predicted token.
 Inspired by [bbycroft.net/llm](https://bbycroft.net/llm), but running a real 0.6B model on your own text.
 
-**Live demo: https://davidheineman.github.io/qwen-web/** (needs a WebGPU browser; downloads ~1.19 GB of weights once)
+**Live demo: https://davidheineman.github.io/qwen-web/interp.html** (needs a WebGPU browser; downloads ~1.19 GB of weights once).
+The site root, https://davidheineman.github.io/qwen-web/, is the Ladder playground below.
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173 (needs WebGPU: Chrome / Edge / Safari 26+)
+npm run dev        # http://localhost:5173 (Ladder), /interp.html (visualizer), /rl.html (needs WebGPU: Chrome / Edge / Safari 26+)
 ```
 
 On first load the page downloads the original bf16 weights straight from the Hugging Face Hub (about 1.19 GB;
@@ -17,6 +18,51 @@ On first load the page downloads the original bf16 weights straight from the Hug
 To skip the download during development, put a copy in `public/models/Qwen3-0.6B/`
 (`model.safetensors`, `tokenizer.json`, `tokenizer_config.json`), e.g. from `~/.cache/huggingface/hub`.
 The app uses it automatically; add `?remote=1` to force the Hub path.
+
+## Ladder playground (`index.html`)
+
+A second, much simpler page: pick a model (default: the 64M NanoGPT Ladder v3 base from
+[tiny-rl-refined-v3-model-sweep](https://huggingface.co/davidheineman/tiny-rl-refined-v3-model-sweep), public),
+or any of the 28 models from the
+[NanoGPT Ladder v2](https://huggingface.co/collections/davidheineman/nanogpt-ladder-v2-28-completed-models)
+(4 data mixtures × small/bridge/large × 250M–4B training tokens, 18M–51M params, private), type raw text and press
+**Continue** (⌘/Ctrl+Enter) to have the model append to it. No chat template: what you see is exactly what the model sees.
+
+- `src/chat/torchzip.ts` reads the original `model.pt` (`torch.save` zip + pickle) directly in the browser.
+- `src/chat/gpu.ts` runs the model with WebGPU (f32, KV cache) in a web worker (`src/chat/worker.ts`): about
+  300–400 tok/s for the largest model on an M-series Mac, and a 700-token prompt in under 0.2 s. After loading, it
+  checks itself against the PyTorch reference token recorded in each repo's `manifest.json`.
+- `src/chat/gpt.ts` is the plain-JS CPU fallback (about 18 tok/s for the large models); add `?cpu=1` to force it.
+  Both match the repo's PyTorch `model.py` (greedy generations identical token for token).
+- The repos are private. `npm run dev` passes `HF_TOKEN` from your shell to the page (dev server only, never in
+  builds); otherwise the page asks for a token and keeps it in `localStorage`. Weights are cached in Cache Storage.
+
+## Live RL on the NanoGPT ladder (`rl.html`)
+
+Fine-tunes a ladder model with reinforcement learning in real time, entirely on your GPU: sample a group of
+completions of one prompt, score each with a JavaScript reward function, and take one policy-gradient step towards
+the above-average ones (REINFORCE with group-normalized advantages, i.e. GRPO without clipping or a KL penalty;
+AdamW, global-norm clipping). The page streams the rollouts and plots the mean reward per step.
+
+Rewards are Python, edited in a Monaco editor and run in the worker with [Pyodide](https://pyodide.org)
+(CPython in WebAssembly, loaded from the jsDelivr CDN on first use): define `reward(text, info)`, where `info` has
+`n`, `tokens`, `ended` and `prompt`; `re`, `math` and `is_word(w)` are available. Errors are shown on the
+offending line.
+
+- `src/rl/kernels.ts` + `trainer.ts`: hand-written WGSL forward (storing activations), backward (tiled GEMM,
+  RMSNorm, GELU, RoPE, attention with recomputed softmax, chunked lm_head/loss, embedding scatter) and AdamW.
+  Gradients match PyTorch autograd to float32 precision (within 2x of PyTorch-f32's own error against float64).
+- Presets (`src/rl/tasks.ts`) are chosen so the base model already earns some reward: RL only sharpens what
+  the model samples. "be positive" on general-large-4b goes from ~0.8 to ~23 in about 80 s (lr 3e-4) and ends up
+  reward-hacking ("love you love you love you…"); "talk about cats" shows the opposite: the model never says
+  "cat", so there is nothing to learn from.
+- "length control" puts a target `{n}` in the prompt and rewards ending the line after n tokens. Each step mixes
+  4 prompts with different n (8 samples each, advantages normalized per prompt), so every update contrasts the
+  targets. With n ∈ {2, 5, 10, 15}: no effect for ~250 steps, then lengths fan out and match n by ~800 steps
+  (corr(n, length) 0.99, ~5 min). It mostly memorizes one sentence per n (unseen n = 7 interpolates, n = 12 doesn't).
+  One target per step only ever learned the average length. "is English" rewards words from a 19k-word list (`scripts/make_english_words.py`, from
+  GPT-2's vocabulary and Webster's 1934 dictionary), times the share of distinct words (0.74 → 0.92 in 100 steps).
+- About 0.8 s per step for the large models (16 × 48 tokens) and 0.5 s for the small ones on an M-series Mac.
 
 ## What you see
 

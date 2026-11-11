@@ -17,6 +17,7 @@
     "vite": "^5.4.21"
   },
   "dependencies": {
-    "@huggingface/tokenizers": "^0.2.0"
+    "@huggingface/tokenizers": "^0.2.0",
+    "monaco-editor": "^0.57.0"
   }
 }

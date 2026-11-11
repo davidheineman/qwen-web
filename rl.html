@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NanoGPT Ladder v2 · RL</title>
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>NanoGPT Ladder v2 <span class="dim">· live RL</span></h1>
+        <nav><a href="./index.html">playground</a> <a href="./interp.html">visualizer</a></nav>
+      </header>
+      <p class="dim intro">Samples a group of completions, scores each with the reward function below, and takes one
+        policy-gradient step towards the above-average ones (GRPO-style, no KL), live on your GPU.</p>
+
+      <div class="grid">
+        <label>model <select id="model"></select></label>
+        <label>task <select id="task"></select></label>
+      </div>
+      <div id="tokenbar" hidden>
+        <input id="token" type="password" placeholder="Hugging Face token (hf_…), the repos are private" autocomplete="off" spellcheck="false" />
+        <button id="token-save">Save</button>
+      </div>
+      <label class="block">prompt <input id="prompt" type="text" spellcheck="false" /></label>
+      <div id="targets-row" class="controls" hidden>
+        <label title="values for {n} in the prompt, e.g. 2-16 or 3,5,8">n values <input id="targets" type="text" value="2-16" spellcheck="false" /></label>
+        <label title="distinct prompts (each with its own n) per training step">prompts per step <select id="pps"><option>1</option><option>2</option><option selected>4</option><option>8</option></select></label>
+        <span class="dim small">each prompt gets its own <code>{n}</code> and its own group of samples</span>
+      </div>
+      <div class="block">
+        <span class="lbl">reward <span class="dim">— Python (runs in your browser with Pyodide): define <code>reward(text, info)</code></span></span>
+        <div id="reward"></div>
+        <div id="reward-status" class="dim small">starting Python…</div>
+      </div>
+      <p id="note" class="dim"></p>
+
+      <div class="controls">
+        <button id="run" class="primary" disabled>Start</button>
+        <button id="reset" disabled title="Restore the original weights and clear the chart">Reset weights</button>
+        <label title="samples per prompt">group <select id="group"><option>4</option><option>8</option><option selected>16</option><option>32</option></select></label>
+        <label>tokens <input id="maxNew" type="number" min="8" max="128" step="8" value="32" /></label>
+        <label>lr <input id="lr" type="number" min="0" step="0.00001" value="0.0003" /></label>
+        <label title="weight of an entropy bonus that keeps the policy from collapsing (0 = off)">entropy <input id="ent" type="number" min="0" step="0.01" value="0" /></label>
+        <label title="end each completion at its first newline"><input id="stop" type="checkbox" /> stop at newline</label>
+        <label>temperature <input id="temp" type="number" min="0.1" max="2" step="0.1" value="0.8" /></label>
+        <label title="sample only from the k most likely tokens (0 = all)">top-k <input id="topk" type="number" min="0" max="50257" step="1" value="40" /></label>
+      </div>
+      <div id="progress" hidden><div id="bar"></div></div>
+      <div id="status" class="dim"></div>
+
+      <section id="chart">
+        <div class="chart-head"><b>Mean reward per step</b>
+          <span class="dim key"><i class="dot"></i> group mean <i class="line"></i> 10-step average</span></div>
+        <div class="plot"><canvas id="canvas"></canvas><div id="tip" class="tip" hidden></div></div>
+        <div id="stats" class="dim"></div>
+      </section>
+
+      <section id="lenchart" hidden>
+        <div class="chart-head"><b>Generated length vs target n</b>
+          <span class="dim key"><i class="dot solid"></i> mean length, last 10 steps <i class="line ref"></i> perfect (length = n)</span></div>
+        <div class="plot"><canvas id="lencanvas"></canvas><div id="lentip" class="tip" hidden></div></div>
+      </section>
+
+      <section>
+        <div class="chart-head"><b id="rollouts-title">Rollouts</b>
+          <span class="dim key">sorted by reward · tint = advantage (<i class="sw pos"></i> above / <i class="sw neg"></i> below the group mean)</span></div>
+        <ol id="rollouts"></ol>
+      </section>
+    </main>
+    <script type="module" src="/src/rl/main.ts"></script>
+  </body>
+</html>

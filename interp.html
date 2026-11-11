@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Qwen3-0.6B, inside out</title>
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <header id="top">
+      <div class="brand">Qwen3-0.6B <span class="dim">inside out</span></div>
+      <div id="status" class="dim"></div>
+      <a class="dim navlink" href="./index.html">Ladder playground →</a>
+      <a class="dim navlink" href="./rl.html">live RL →</a>
+    </header>
+
+    <section id="controls" hidden>
+      <textarea id="prompt" rows="6" spellcheck="false"></textarea>
+      <div class="ctl-col">
+        <label class="chk" title="Wrap / unwrap the text box contents in Qwen3's chat template"><input type="checkbox" id="chat" checked /> chat template</label>
+        <label class="chk">temp <input type="number" id="temp" value="0" min="0" max="2" step="0.1" /></label>
+      </div>
+      <div class="ctl-col">
+        <button id="run" class="primary" title="Tokenize the prompt and run one forward pass">Run</button>
+        <button id="step" title="Pick the next token, append it and run again">+1 token</button>
+      </div>
+      <div class="ctl-col">
+        <button id="gen" title="Generate tokens one by one, updating the view each time">Generate 16</button>
+        <button id="stop" disabled>Stop</button>
+      </div>
+    </section>
+
+    <section id="tokbar" hidden>
+      <div id="tokens"></div>
+      <div id="predict"></div>
+    </section>
+
+    <main id="main" hidden>
+      <div id="overview"></div>
+      <div id="detail"></div>
+    </main>
+
+    <footer id="walk" hidden></footer>
+
+    <div id="loader">
+      <div class="load-card">
+        <h1>Qwen3-0.6B, inside out</h1>
+        <p>Runs a real 0.6B-parameter language model entirely in your browser with WebGPU, and shows every
+          weight matrix and every intermediate activation, layer by layer, for each token it predicts.</p>
+        <p class="dim" id="load-note"></p>
+        <button id="load-btn" class="primary" hidden>Download &amp; load model</button>
+        <div id="progress" hidden><div id="bar"></div></div>
+        <div id="load-msg" class="dim"></div>
+      </div>
+    </div>
+
+    <div id="modal" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

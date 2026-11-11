@@ -1,5 +1,6 @@
 // Runs a page in headless Chrome (WebGPU enabled) against a temporary Vite dev server.
-// Usage: node scripts/e2e.mjs [path=/test.html] [--headful] [--shot out.png]
+// Usage: node scripts/e2e.mjs [path=/test.html] [--headful] [--shot out.png] [--eval js]
+// For /index.html (the Ladder page), set HF_TOKEN to seed the page with a token for the private ladder repos.
 import { createServer } from "vite";
 import puppeteer from "puppeteer-core";
 
@@ -26,6 +27,9 @@ try {
   const page = await browser.newPage();
   page.on("console", (m) => console.log(`[page] ${m.text()}`));
   page.on("pageerror", (e) => console.log(`[pageerror] ${e.message}`));
+  if (process.env.HF_TOKEN) {
+    await page.evaluateOnNewDocument((t) => localStorage.setItem("nanogpt-ladder:hf-token", t), process.env.HF_TOKEN);
+  }
   await page.goto(url);
   if (path.startsWith("/test.html")) {
     await page.waitForFunction("window.__selftest", { timeout: 600_000 });

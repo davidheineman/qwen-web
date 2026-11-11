@@ -1,0 +1,43 @@
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #fafaf9;
+  --line: #d6d5d0;
+  --text: #1c1c1a;
+  --muted: #7a7972;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+[hidden] { display: none !important; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button, select, input {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 4px 10px;
+}
+button { cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--muted); }
+button:disabled { opacity: 0.4; cursor: default; }
+
+main { max-width: 720px; margin: 0 auto; padding: 8vh 20px 40px; display: flex; flex-direction: column; gap: 10px; }
+h1 { font-size: 16px; font-weight: 600; margin: 0; }
+#examples { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+#examples button { border: none; background: none; padding: 0; color: var(--text); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+#examples button:hover { text-decoration-color: var(--text); }
+#tokenbar { display: flex; gap: 8px; }
+#tokenbar input { flex: 1; }
+#text {
+  height: 55vh; resize: vertical; padding: 12px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; font: 13px/1.55 var(--mono); white-space: pre-wrap;
+}
+#text:focus { outline: none; border-color: var(--muted); }
+.controls { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
+.controls label { display: flex; gap: 5px; align-items: center; }
+.controls input { width: 62px; padding: 3px 6px; }
+#go, #stop { color: var(--text); font-size: 14px; padding: 5px 16px; }
+#status { font-size: 12px; color: var(--muted); min-height: 18px; }
+#progress { height: 3px; background: var(--surface); border-radius: 2px; overflow: hidden; }
+#bar { height: 100%; width: 0; background: var(--muted); transition: width 0.15s; }
+#nav { display: flex; gap: 14px; font-size: 12px; }
+#nav a { color: var(--muted); text-decoration: none; }
+#nav a:hover { color: var(--text); }

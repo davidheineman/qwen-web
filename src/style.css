@@ -35,6 +35,8 @@ input[type="number"] { width: 52px; background: var(--surface-2); color: inherit
 #top { display: flex; align-items: baseline; gap: 16px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
 .brand { font-weight: 650; font-size: 15px; }
 #status { margin-left: auto; font-size: 12px; }
+.navlink { font-size: 12px; text-decoration: none; }
+.navlink:hover { color: var(--text-secondary); }
 #controls { display: flex; gap: 12px; padding: 10px 16px; align-items: stretch; border-bottom: 1px solid var(--line); }
 #prompt {
   flex: 1; resize: vertical; min-height: 44px; background: var(--surface-1); color: var(--text-primary);
