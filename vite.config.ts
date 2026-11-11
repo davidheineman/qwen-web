@@ -14,6 +14,7 @@ export default defineConfig(({ command }) => ({
         main: resolve(__dirname, "index.html"),
         interp: resolve(__dirname, "interp.html"),
         rl: resolve(__dirname, "rl.html"),
+        data: resolve(__dirname, "data.html"),
       },
     },
   },

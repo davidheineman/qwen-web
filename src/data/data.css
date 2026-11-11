@@ -1,0 +1,40 @@
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.45 -apple-system, system-ui, sans-serif; background: #fafafa; color: #222; height: 100vh; display: flex; flex-direction: column; }
+header { display: flex; gap: 12px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #ddd; background: #fff; flex-wrap: wrap; }
+header label { color: #666; }
+select, input { font: inherit; padding: 2px 4px; }
+#search { flex: 1; min-width: 200px; }
+#title { font-weight: 600; color: #222; text-decoration: none; }
+#title:hover { text-decoration: underline; color: #1a4fd6; }
+main { flex: 1; display: flex; min-height: 0; }
+#list { width: 380px; overflow-y: auto; border-right: 1px solid #ddd; background: #fff; }
+.row { padding: 6px 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+.row:hover { background: #f3f6ff; }
+.row.sel { background: #dde6ff; }
+.row .meta { color: #888; font-size: 11px; }
+.row .snip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#detail { flex: 1; overflow-y: auto; padding: 12px 18px; }
+.field { margin-bottom: 14px; }
+.field h4 { margin: 0 0 3px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #777; }
+.field h4 .n { text-transform: none; color: #aaa; font-weight: normal; }
+pre { margin: 0; padding: 8px 10px; background: #fff; border: 1px solid #e3e3e3; border-radius: 4px; white-space: pre-wrap; word-break: break-word; font: 12px/1.45 ui-monospace, Menlo, monospace; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; font: 12px ui-monospace, Menlo, monospace; margin-bottom: 14px; }
+.kv span:nth-child(odd) { color: #888; }
+.p-prompt { color: #888; }
+.p-prefix { background: #eef6ee; }
+.p-completion { background: #ffe08a; outline: 1px solid #e0b000; }
+.empty { color: #bbb; font-style: italic; }
+.muted { color: #999; }
+.hl { background: #fff36b; }
+.pager { padding: 6px 10px; color: #888; font-size: 11px; }
+.panel { width: 190px; overflow-y: auto; border-right: 1px solid #ddd; background: #fff; flex-shrink: 0; }
+.panel .t { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+.panel .t:hover { background: #f3f6ff; }
+.panel .t.sel { background: #dde6ff; font-weight: 600; }
+.panel .t .c { color: #999; font-size: 11px; font-weight: normal; }
+#list { flex-shrink: 0; }
+#configs { width: 230px; }
+#configs .t span:first-child { word-break: break-word; }
+#sitenav { display: flex; gap: 12px; font-size: 12px; }
+#sitenav a { color: #888; text-decoration: none; }
+#sitenav a:hover { color: #222; }

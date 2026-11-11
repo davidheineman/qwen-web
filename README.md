@@ -65,6 +65,13 @@ offending line.
   GPT-2's vocabulary and Webster's 1934 dictionary), times the share of distinct words (0.74 → 0.92 in 100 steps).
 - About 0.8 s per step for the large models (16 × 48 tokens) and 0.5 s for the small ones on an M-series Mac.
 
+## Dataset viewer (`data.html`)
+
+Browses the parquet files of [tiny-rl-refined-tasks-v5](https://huggingface.co/datasets/davidheineman/tiny-rl-refined-tasks-v5)
+straight from the Hub with [hyparquet](https://github.com/hyparam/hyparquet) (`src/data/main.js`): configs come from the
+dataset card, tasks are the parquet files' parent folders, rows stream in row group by row group, and the search box
+takes a regex. Add `?repo=owner/name` to browse another dataset.
+
 ## What you see
 
 - **Token bar**: click any token to make it the focus position. Chips are tinted by where the selected

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>tiny-rl-refined-tasks-v5 viewer</title>
+  <link rel="icon" href="data:," />
+</head>
+<body>
+  <header>
+    <a id="title" target="_blank" rel="noopener"></a>
+    <label>split <select id="split"></select></label>
+    <input id="search" type="search" placeholder="search loaded rows… (regex ok)" />
+    <nav id="sitenav"><a href="./index.html">ladder</a> <a href="./rl.html">live RL</a> <a href="./interp.html">visualizer</a></nav>
+  </header>
+  <main>
+    <nav id="configs" class="panel"></nav>
+    <nav id="tasks" class="panel"></nav>
+    <aside id="list"></aside>
+    <section id="detail"><p class="muted">Select a row.</p></section>
+  </main>
+  <script type="module" src="/src/data/main.js"></script>
+</body>
+</html>
