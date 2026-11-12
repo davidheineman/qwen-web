@@ -2,9 +2,9 @@ import { parquetMetadataAsync, parquetReadObjects, asyncBufferFromUrl } from 'hy
 import { compressors } from 'hyparquet-compressors'
 import './data.css'
 
-// Browse the parquet files of a Hugging Face dataset (default: tiny-rl-refined-tasks-v5); ?repo=owner/name for another.
+// Browse the parquet files of a Hugging Face dataset (default: tiny-rl-refined-tasks-v5.5); ?repo=owner/name for another.
 
-const REPO = new URLSearchParams(location.search).get('repo') || 'davidheineman/tiny-rl-refined-tasks-v5'
+const REPO = new URLSearchParams(location.search).get('repo') || 'davidheineman/tiny-rl-refined-tasks-v5.5'
 const BASE = `https://huggingface.co/datasets/${REPO}/resolve/main/`
 const $ = (id) => document.getElementById(id)
 const els = { split: $('split'), search: $('search'), list: $('list'), detail: $('detail'), tasks: $('tasks'), configs: $('configs') }
@@ -33,25 +33,43 @@ const tasksOf = (config, split) => Object.keys(tree[config]?.[split] ?? {}).sort
 const pathsOf = () => tree[state.config]?.[state.split]?.[state.task] ?? []
 
 // Configs come from the dataset card (README `configs:` block), so new configs show up automatically.
-// Each data_files glob is matched against the repo's file list; the task is the file's parent directory.
+// Each data_files glob is matched against the repo's file list. The task is the path segment the glob's first
+// wildcard matched (native/*/rl.parquet -> folder, sft/*.parquet -> file name), else the file's parent directory.
+// Configs whose files all appear in a broader config (e.g. per-task latex_envs next to rl_envs) are skipped.
 // Falls back to scanning data/<config>/[<split>/]<task>/*.parquet when the card defines no configs.
 const globToRe = (g) => new RegExp('^' + g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*/g, '\0').replace(/\*/g, '[^/]*').replace(/\0/g, '.*') + '$')
+function taskName(glob, file) {
+  const gs = glob.split('/')
+  const fs = file.split('/')
+  const i = gs.findIndex((g) => g.includes('*'))
+  return (i >= 0 && gs.length === fs.length ? fs[i] : fs.at(-2) ?? fs[0]).replace(/\.parquet$/, '')
+}
 
 async function loadTree() {
   const info = await (await fetch(`https://huggingface.co/api/datasets/${REPO}`)).json()
   const files = info.siblings.map((s) => s.rfilename).filter((f) => f.endsWith('.parquet')).sort()
   const configs = info.cardData?.configs ?? []
+  const matched = {} // config -> Set of "split\0path"
   for (const c of configs) {
     const dataFiles = typeof c.data_files === 'string' ? [{ split: 'train', path: c.data_files }] : c.data_files ?? []
+    const byConfig = {}
+    const keys = new Set()
     for (const df of dataFiles) {
+      const split = df.split ?? 'train'
       for (const glob of [df.path].flat()) {
         const re = globToRe(glob)
         for (const f of files.filter((f) => re.test(f))) {
-          const task = f.split('/').at(-2)
-          ;(((tree[c.config_name] ??= {})[df.split ?? 'train'] ??= {})[task] ??= []).push(f)
+          ;((byConfig[split] ??= {})[taskName(glob, f)] ??= []).push(f)
+          keys.add(split + '\0' + f)
         }
       }
     }
+    if (keys.size) (tree[c.config_name] = byConfig), (matched[c.config_name] = keys)
+  }
+  const names = Object.keys(matched)
+  for (const a of names) {
+    const covered = names.some((b) => b !== a && b in tree && matched[b].size > matched[a].size && [...matched[a]].every((k) => matched[b].has(k)))
+    if (covered) delete tree[a]
   }
   if (!configs.length) {
     for (const f of files.filter((f) => f.startsWith('data/'))) {

@@ -67,9 +67,10 @@ offending line.
 
 ## Dataset viewer (`data.html`)
 
-Browses the parquet files of [tiny-rl-refined-tasks-v5](https://huggingface.co/datasets/davidheineman/tiny-rl-refined-tasks-v5)
+Browses the parquet files of [tiny-rl-refined-tasks-v5.5](https://huggingface.co/datasets/davidheineman/tiny-rl-refined-tasks-v5.5)
 straight from the Hub with [hyparquet](https://github.com/hyparam/hyparquet) (`src/data/main.js`): configs come from the
-dataset card, tasks are the parquet files' parent folders, rows stream in row group by row group, and the search box
+dataset card (per-task configs already covered by a broader one are skipped), tasks are the path segment the
+config's `*` matched (folder or file name), rows stream in row group by row group, and the search box
 takes a regex. Add `?repo=owner/name` to browse another dataset.
 
 ## What you see
