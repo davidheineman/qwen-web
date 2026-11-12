@@ -14,7 +14,7 @@ document.title = `${REPO} viewer`
 
 // tree: config -> split -> task -> [paths]
 const tree = {}
-const state = { config: '', split: '', task: '' }
+const state = { config: 'rl_envs', split: '', task: '' } // initial config when the URL hash names none
 let rows = []
 let filtered = []
 let selected = -1
@@ -213,7 +213,7 @@ function applyFilter(resetScroll) {
 
 // ---------- list ----------
 function snippet(r) {
-  const s = r.question || r.text || r.prompt || ''
+  const s = r.question || r.text || r.prompt || r.reference || ''
   return s.replace(/\s+/g, ' ').slice(0, 160)
 }
 function renderList() {
@@ -260,7 +260,10 @@ function select(i) {
 }
 
 // ---------- detail ----------
-const SCALARS = ['task', 'source_id', 'document_id', 'source_split', 'hint_level', 'prompt_tokens', 'completion_tokens', 'tokens', 'budget_tokens', 'example_count', 'version', 'group']
+const SCALARS = ['task', 'source_id', 'source_group', 'document_id', 'source_split', 'hint_level', 'prompt_tokens', 'completion_tokens', 'tokens', 'example_count', 'version', 'group']
+const HIDDEN = new Set(['__i', 'budget_tokens'])
+const JSON_COLS = new Set(['row_json', 'document_json'])
+let showJSON = localStorage.getItem('data.showJSON') === '1' // remembered across rows and reloads
 
 function hl(text) {
   const re = searchRe()
@@ -291,8 +294,40 @@ function field(name, body, note = '') {
 }
 function textField(name, v) {
   if (v == null || v === '' || v === '[]' || v === '{}') return field(name, '<pre class="empty">(empty)</pre>')
-  const s = prettyMaybeJSON(v)
-  return field(name, `<pre>${hl(s)}</pre>`, `${s.length.toLocaleString()} chars`)
+  return field(name, `<pre>${hl(prettyMaybeJSON(v))}</pre>`)
+}
+
+// ---------- model view: one text, gold continuation in yellow ----------
+// Mirrors how the dataset's envs.py builds an episode, minus the per-sample randomness (hint length,
+// legacy system prompt and sampled demos). Returns [[text, isGold], ...] or null.
+const IM = (role, text) => `<|im_start|>${role}\n${text}<|im_end|>\n`
+function v2Header(r) {
+  // functional_rl/v2.py header(): raw tasks have none, chat tasks are User/Assistant, mbpp is a comment block
+  if (['python_syntax', 'latex', 'make_sentence', 'basic_python', 'mbpp_docstring', 'humaneval', 'humaneval_docstring'].includes(r.task)) return ''
+  if (['chat', 'preference', 'reward_modeling'].includes(r.task)) return `User: ${r.question}\nAssistant:`
+  if (r.task === 'mbpp') return [...r.question.split('\n'), ...('Example: ' + (r.tests?.[0] ?? '')).split('\n')].map((l) => `# ${l}\n`).join('') + '\n'
+  return `Question: ${r.question}\n`
+}
+function modelView(r) {
+  if (typeof r.prompt === 'string' && typeof r.completion === 'string') return [[r.prompt, false], [r.completion, true]]
+  let j
+  try {
+    j = JSON.parse(r.row_json)
+  } catch {
+    return null
+  }
+  if (j.row?.fen && Array.isArray(j.row.solution)) {
+    // chess: the solver plays the even plies, the opponent's replies come back as user turns
+    const out = [[IM('user', `Solve the entire chess puzzle. Opponent replies are supplied after each correct move.\nReturn only the winning UCI move, e.g. e2e4.\nFEN: ${j.row.fen}`) + '<|im_start|>assistant\n', false]]
+    j.row.solution.forEach((m, i) => out.push(i % 2 ? [`<|im_end|>\n${IM('user', `opponent: ${m}`)}<|im_start|>assistant\n`, false] : [m, true]))
+    return out
+  }
+  if ('prompt' in j && 'answer' in j && 'kind' in j) return [[IM('user', j.prompt) + '<|im_start|>assistant\n' + (j.prefix ?? ''), false], [j.answer, true]]
+  if ('reference' in j && 'question' in j) {
+    const demos = (j.demonstrations ?? []).map((d) => (v2Header({ ...d, task: d.task ?? j.task }) + d.reference).trimEnd() + '\n\n').join('')
+    return [[demos + v2Header(j), false], [j.reference, true]]
+  }
+  return null
 }
 
 function renderDetail() {
@@ -300,17 +335,20 @@ function renderDetail() {
   if (!r) return
   let html = '<div class="kv">' + SCALARS.filter((k) => k in r).map((k) => `<span>${k}</span><span>${esc(r[k])}</span>`).join('') + '</div>'
 
-  if ('prompt' in r && 'completion' in r) {
+  const view = modelView(r)
+  if (view) {
     html += field(
-      'model view: prompt → completion',
-      `<pre><span class="p-prompt">${hl(r.prompt)}</span><span class="p-completion">${hl(r.completion)}</span></pre>`,
-      'grey = prompt, yellow = completion'
+      'prompt → gold continuation',
+      `<pre>${view.map(([t, gold]) => `<span class="${gold ? 'p-completion' : 'p-prompt'}">${hl(t)}</span>`).join('')}</pre>`,
+      'grey = context, yellow = gold continuation'
     )
   }
-
+  // with a model view, question/reference/prompt/completion are already in it
+  const shown = view ? new Set(['question', 'reference', 'prompt', 'completion']) : new Set()
   const order = ['question', 'text', 'answer', 'full_reference', 'tests', 'setup', 'keywords', 'rejected_reply', 'baseline', 'completion', 'completion_ids', 'source_ids', 'provenance', 'prefix', 'prompt', 'demonstrations']
-  const rest = Object.keys(r).filter((k) => k !== '__i' && !SCALARS.includes(k) && !order.includes(k))
+  const rest = Object.keys(r).filter((k) => !HIDDEN.has(k) && !JSON_COLS.has(k) && !SCALARS.includes(k) && !order.includes(k))
   for (const k of [...order.filter((k) => k in r), ...rest]) {
+    if (shown.has(k)) continue
     if (k === 'demonstrations') {
       let demos
       try {
@@ -327,8 +365,17 @@ function renderDetail() {
     }
     html += textField(k, r[k])
   }
+  for (const k of Object.keys(r).filter((k) => JSON_COLS.has(k))) {
+    html += `<details class="json"${showJSON ? ' open' : ''}><summary>${esc(k)}</summary><pre>${hl(prettyMaybeJSON(r[k]))}</pre></details>`
+  }
   els.detail.innerHTML = html
   els.detail.scrollTop = 0
+  els.detail.querySelectorAll('details.json').forEach((d) =>
+    d.addEventListener('toggle', () => {
+      showJSON = d.open
+      localStorage.setItem('data.showJSON', showJSON ? '1' : '0')
+    })
+  )
 }
 
 window.addEventListener("hashchange", readHash)

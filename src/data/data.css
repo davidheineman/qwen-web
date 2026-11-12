@@ -38,3 +38,5 @@ pre { margin: 0; padding: 8px 10px; background: #fff; border: 1px solid #e3e3e3;
 #sitenav { display: flex; gap: 12px; font-size: 12px; }
 #sitenav a { color: #888; text-decoration: none; }
 #sitenav a:hover { color: #222; }
+details.json { margin-bottom: 14px; }
+details.json summary { cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #777; margin-bottom: 3px; user-select: none; }

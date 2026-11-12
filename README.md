@@ -72,6 +72,9 @@ straight from the Hub with [hyparquet](https://github.com/hyparam/hyparquet) (`s
 dataset card (per-task configs already covered by a broader one are skipped), tasks are the path segment the
 config's `*` matched (folder or file name), rows stream in row group by row group, and the search box
 takes a regex. Add `?repo=owner/name` to browse another dataset.
+It opens on `rl_envs`; each row is shown as one text with the gold continuation in yellow, rebuilt the way the
+dataset's `envs.py` builds episodes (the row's demonstrations + task header, or the legacy chat turn), minus the
+per-sample hint length, system prompt and sampled demos. `row_json` / `document_json` sit behind a toggle.
 
 ## What you see
 
